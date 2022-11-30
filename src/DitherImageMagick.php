@@ -52,8 +52,6 @@ class DitherImageMagick extends ImageMagick
 		$options = $this->preprocess($file, $options);
 		$command = [];
 
-		kirbyLog()->log('dither', 'info', [ $options ]);
-
 		$command[] = $this->convert($file, $options);
 		$command[] = $this->strip($file, $options);
 		$command[] = $this->interlace($file, $options);
