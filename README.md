@@ -13,6 +13,8 @@ At the moment, it is more a proof-of-concept and not recommended for production.
 
 - Dithering is a somewhat complex topic. What this plugin does, i.e. running a generic, pre-set `ImageMagick` command on all your images, will always be a compromise. You can get *much* better results converting your images individually with specific settings.
 
+- If your main goal is asset-size reduction, this might not be the plugin for you. While dithered lofi-`PNG`s *can* be drastically smaller than high quality `JPG`s, they are more of a statement. In most use cases, modern image formats such as `JPEG XL`, `AVIF` or `WebP` are a better option.
+
 
 ****
 
@@ -112,3 +114,45 @@ The defaults apply a rather over-the-top, unapologetic ‘effect’. However, yo
 ````
 
 Consult the [ImageMagick documentation](https://legacy.imagemagick.org/Usage/quantize/) for more information on what you could do. Note that Kirby's `thumbs` component constructs the `ImageMagick` command, so you should only set color quantization and dithering specific commands in this option. Resizing, output file format, etc. are best defined in your `thumbs` config (see above).
+
+
+### Some front-end ideas
+
+With some dithering settings, it might be beneficial to enable specific image scaling algorithms using CSS:
+
+````css
+img.dithered {
+    image-rendering:optimizeSpeed;             /* Fallback */
+    image-rendering:-moz-crisp-edges;          /* FF */
+    image-rendering:-webkit-optimize-contrast; /* Safari */
+    image-rendering:optimize-contrast;         /* CSS3 spec */
+    image-rendering:crisp-edges;               /* CSS4 spec */
+    image-rendering:pixelated;                 /* CSS4 spec */
+    -ms-interpolation-mode:nearest-neighbor;   /* IE8+ */
+}
+````
+
+Grayscale images can be ‘recolored’ using [CSS blend-modes](https://developer.mozilla.org/en-US/docs/Web/CSS/mix-blend-mode) such as `hard-light` for a nice effect, as seen on [Lowtechmag](https://solar.lowtechmagazine.com). Note that you need a wrapper around `img` tags, as coloring the `img` background does not work:
+
+````css
+// CSS
+.background-img {
+	background-blend-mode: hard-light;
+	background-color: #333319;
+}
+
+img {
+	mix-blend-mode: hard-light;
+}
+
+figure {
+	background-color: #333319;
+}
+````
+
+````html
+// HTML
+<div class="background-img" style="background-image: url('path/to/image')"></div>
+
+<figure><img alt="" src="path/to/image"/></figure>
+````
