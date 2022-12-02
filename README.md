@@ -1,25 +1,38 @@
 # Dither for Kirby CMS
 
-This plugin extends [Kirby's](http://getkirby.com/) `ImageMagick` `Darkroom` driver to provide dither and halftone image manipulation.
+This plugin extends [Kirby's](http://getkirby.com/) `ImageMagick` `Darkroom` driver to provide dither and halftone image manipulation. It was loosely inspired by [Solar Web Design principles](https://github.com/lowtechmag/solar/wiki/Solar-Web-Design) and [Ditherpunk aesthetic](https://obradinn.com).
 
-At the moment, it is more a proof-of-concept, so there are no configuration options for the `dither` and `halftone` effects. `dither`, in `ImageMagick` terms, is set to a grayscale `o8x8` ordered dither, while `halftone` is set to a `h8x8a` ordered dither.
+At the moment, it is more a proof-of-concept and not recommended for production.
 
-Please note that this plugin is not ready for production yet, since there are a few issues where it doesn't fully work with Kirby's `thumbs` component (see below).
 
-Contributions are appreciated.
+## Caveats
+
+- Please note that this plugin is not fully ready for production yet, since there are a few issues where it doesn't play nice with Kirby's `thumbs` component (see below, contributions are appreciated.)
+
+- Thumb generation can get a bit computationally expensive depending on the settings handed to `ImageMagick`. It is recommended to pre-render your thumbs when using `kirby-dither`, for example using [kirby3-janitor](https://github.com/bnomei/kirby3-janitor)
+
+- Dithering is a somewhat complex topic. What this plugin does, i.e. running a generic, pre-set `ImageMagick` command on all your images, will always be a compromise. You can get *much* better results converting your images individually with specific settings.
 
 
 ****
 
+
 ## Installation
 
-### Download
+### Prerequisites
+Tested with Kirby `3.8` and up.
 
-Download and copy this repository to `/site/plugins/kirby-dither`. Tested with Kirby `^3.8`.
+Nota bene: This plugin extends Kirby’s default `im`  `Darkroom` driver. It therefore might not play nice with plugins which also do that, such as the popular [Kirby Focus](https://github.com/flokosiol/kirby-focus).
+
+### Download
+Download and copy this repository to `/site/plugins/kirby-dither`.
+
 
 ## Setup
 
-This plugin requires that you set your [Thumbs driver](https://getkirby.com/docs/reference/system/options/thumbs#thumbs-driver) to ImageMagick (`im`) in your `config.php`:
+It is recommended to fully clean your `/media` folder after installation, since already existing thumbs might not be overwritten.
+
+For the plugin to work, you neet to set your [Thumbs driver](https://getkirby.com/docs/reference/system/options/thumbs#thumbs-driver) to ImageMagick (`im`) in your `config.php`:
 
 ````php
 return [
@@ -29,44 +42,73 @@ return [
 ];
 ````
 
-Nota bene: This plugin extends/overwrites the default `im` driver. It therefore might not play nice with plugins which also do that, such as the popular [Kirby Focus](https://github.com/flokosiol/kirby-focus).
-
 
 ## Use
 
-The plugin provides two `file` methods:
+`kirby-dither` provides two [`file` methods](https://getkirby.com/docs/reference/objects/cms/file), `dither()` and `halftone()`.
 
-`$image->dither()` and `$image->halftone()`
+Use them in your template:
 
-Furthermore, it *should* also allow you to set `thumbs` options in your `/site/config/config.php`. This does not yet work as expected all the time. I have run into issues defining [`srcset` presets](https://getkirby.com/docs/reference/system/options/thumbs#srcsets), where the `dither` and `halftone` option is ignored *if* you just define resize options. As soon as you set, e.g. `'quality' => 99` or `'grayscale' => true`, it works. 
+````html
+// dither
+<img src="<?= $image->dither()->url() ?>" alt="">
 
-Apply the dither effect to all images:
+// halftone effect
+<img src="<?= $image->halftone()->url() ?>" alt="">
+````
+
+Furthermore, it *should* also allow you to set `thumbs` options in your `/site/config/config.php`. However, this does not yet work as expected all the time. I have run into issues defining [`srcset` presets](https://getkirby.com/docs/reference/system/options/thumbs#srcsets), where the `dither` and `halftone` option is ignored if you just define resize options. As soon as you set, e.g. `'quality' => 99` or `'grayscale' => true`, it works.
+
+### Config Example
+Apply dither to all images for a full ditherpunk experience. Depending on your dithering settings (see below), it is recommended to heavily resize images, and use `png` or `gif` as output format for a reduced file size:
 
 ````php
 // in your config
 return [
-  'thumbs' => [
+  'thumbs' => [ // ditherpunk galore
+    'driver' => 'im',
+    'height' => 800,
+    'quality' => 96,
+    'width' => 800,
+    'format' => 'png',
     'dither' => true
   ]
 ];
 ````
 
-Or as a preset:
+Or define a preset:
 
-````php
-// in your config 
+````php 
+// in your config
 return [
-    'thumbs' => [
-        'presets' => [
-            'default' => ['width' => 1024, 'quality' => 80],
-            'dithered' => ['dither' => true],
-            'halftone' => ['halftone' => true]
-        ]
+  'thumbs' => [
+    'driver' => 'im',
+    'presets' => [
+      'halftone' => [
+        'height' => 800,
+        'quality' => 96,
+        'width' => 800,
+        'format' => 'png',
+        'halftone' => true
+      ]
     ]
+  ]
 ];
 
 // in your template
-$image->thumb('dithered');
+$image->thumb('halftone');
 ````
 
 Check out the Kirby docs [for more information on thumbs options](https://getkirby.com/docs/reference/system/options/thumbs).
+
+### Options 
+The defaults apply a rather over-the-top, unapologetic ‘effect’. However, you can fully control how `ImageMagick` manipulates your images by setting an option in your `config.php`:
+
+````php
+'mof.dither' => [
+  'dither' => '-colors 256 -dither FloydSteinberg',
+  'halftone' => '-monochrome -ordered-dither h4x4a'
+],
+````
+
+Consult the [ImageMagick documentation](https://legacy.imagemagick.org/Usage/quantize/) for more information on what you could do. Note that Kirby's `thumbs` component constructs the `ImageMagick` command, so you should only set color quantization and dithering specific commands in this option. Resizing, output file format, etc. are best defined in your `thumbs` config (see above).

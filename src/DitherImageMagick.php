@@ -23,7 +23,7 @@ class DitherImageMagick extends ImageMagick
 	protected function dither(string $file, array $options): string|null
 	{
 		if ($options['dither'] === true) {
-			return '-gamma 1.1 -colorspace gray -colors 8 -ordered-dither o8x8';
+			return kirby()->option('mof.dither.dither');
 		}
 
 		return null;
@@ -35,7 +35,7 @@ class DitherImageMagick extends ImageMagick
 	protected function halftone(string $file, array $options): string|null
 	{
 		if ($options['halftone'] === true) {
-			return '-ordered-dither h8x8a';
+			return kirby()->option('mof.dither.halftone');
 		}
 
 		return null;
@@ -44,6 +44,9 @@ class DitherImageMagick extends ImageMagick
 	/**
 	 * Creates and runs the full imagemagick command
 	 * to process the image
+	 *
+	 * see:
+	 * https://github.com/getkirby/kirby/blob/3.8.2/src/Image/Darkroom/ImageMagick.php#L115
 	 *
 	 * @throws \Exception
 	 */
