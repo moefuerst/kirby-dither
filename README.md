@@ -11,7 +11,7 @@ At the moment, it is more a proof-of-concept and not recommended for production.
 
 - Thumb generation can get a bit computationally expensive depending on the settings handed to `ImageMagick`. It is recommended to pre-render your thumbs when using `kirby-dither`, for example using [kirby3-janitor](https://github.com/bnomei/kirby3-janitor)
 
-- Dithering is a somewhat complex topic. What this plugin does, i.e. running a generic, pre-set `ImageMagick` command on all your images, will always be a compromise. You can get *much* better results converting your images individually with specific settings.
+- Dithering is a somewhat complex topic. What this plugin does, i.e. running a generic, pre-set `ImageMagick` command on all your images, will always be a compromise. You can get *much* better results converting your images individually with specific settings. Furthermore, aliasing can get in the way of dithered images rendering as crisp as intended, so on the web it is [probably best done client side](https://github.com/andrewstephens75/as-dithered-image#why-do-this-client-side).
 
 - If your main goal is asset-size reduction, this might not be the plugin for you. While dithered lofi-`PNG`s *can* be drastically smaller than high quality `JPG`s, they are more of a statement. In most use cases, modern image formats such as `JPEG XL`, `AVIF` or `WebP` are a better option.
 
